@@ -2,6 +2,7 @@
 pub enum CharType {
     Char(char),
     NewLine,
+    LineHeadSpace,
 }
 
 #[derive(Debug, Default)]
@@ -13,23 +14,22 @@ pub struct TextBox<const TEXT_LENGTH_LIMIT: usize> {
 
 impl<const TEXT_LENGTH_LIMIT: usize> TextBox<TEXT_LENGTH_LIMIT> {
     pub fn new<STRING: Into<String>>(text: STRING) -> Self {
-        let mut remains = Vec::new();
-
+        let mut remains = vec![CharType::Char('◆')];
         let mut size = 0;
         for c in text.into().chars() {
             match c {
                 '\n' => {
                     remains.push(CharType::NewLine);
-                    remains.push(CharType::Char(' '));
+                    remains.push(CharType::Char('◆'));
                     size = 0;
-                },
+                }
                 c if size < TEXT_LENGTH_LIMIT => {
                     remains.push(CharType::Char(c));
                     size += 1;
                 }
                 c => {
                     remains.push(CharType::NewLine);
-                    remains.push(CharType::Char(' '));
+                    remains.push(CharType::LineHeadSpace);
                     remains.push(CharType::Char(c));
                     size = 0;
                 }
@@ -48,14 +48,22 @@ impl<const TEXT_LENGTH_LIMIT: usize> TextBox<TEXT_LENGTH_LIMIT> {
         }
 
         match self.remains.remove(0) {
-            CharType::Char(c) if self.new_line_count == 0 => {
-                self.lines_head_mut().push(c);
-            }
-            CharType::Char(c) if self.new_line_count == 1 => {
-                self.lines_middle_mut().push(c);
-            }
             CharType::Char(c) => {
-                self.lines_last_mut().push(c);
+                if self.new_line_count == 0 {
+                    self.lines_head_mut().push(c);
+                } else if self.new_line_count == 1 {
+                    self.lines_middle_mut().push(c);
+                } else {
+                    self.lines_last_mut().push(c);
+                }
+            }
+            CharType::LineHeadSpace => {
+                if self.new_line_count == 1 {
+                    self.lines_middle_mut().push(' ');
+                } else {
+                    self.lines_last_mut().push(' ');
+                }
+                self.next();
             }
             CharType::NewLine if self.new_line_count < 2 => {
                 self.new_line_count += 1;
@@ -109,17 +117,20 @@ mod tests {
     fn test_text_box() {
         let mut text_box = TextBox::<3>::new("aaab\ncccdd\ne".to_string());
 
-        assert_eq!(text_box.next().unwrap(), &["a", "", ""]);
-        assert_eq!(text_box.next().unwrap(), &["aa", "", ""]);
-        assert_eq!(text_box.next().unwrap(), &["aaa", "", ""]);
-        assert_eq!(text_box.next().unwrap(), &["aaa", "b", ""]);
-        assert_eq!(text_box.next().unwrap(), &["aaa", "b", "c"]);
-        assert_eq!(text_box.next().unwrap(), &["aaa", "b", "cc"]);
-        assert_eq!(text_box.next().unwrap(), &["aaa", "b", "ccc"]);
-        assert_eq!(text_box.next().unwrap(), &["b", "ccc", ""]);
-        assert_eq!(text_box.next().unwrap(), &["b", "ccc", "d"]);
-        assert_eq!(text_box.next().unwrap(), &["b", "ccc", "dd"]);
-        assert_eq!(text_box.next().unwrap(), &["ccc", "dd", ""]);
-        assert_eq!(text_box.next().unwrap(), &["ccc", "dd", "e"]);
+        assert_eq!(text_box.next().unwrap(), &["◆", "", ""]);
+        assert_eq!(text_box.next().unwrap(), &["◆a", "", ""]);
+        assert_eq!(text_box.next().unwrap(), &["◆aa", "", ""]);
+        assert_eq!(text_box.next().unwrap(), &["◆aaa", "", ""]);
+        assert_eq!(text_box.next().unwrap(), &["◆aaa", " b", ""]);
+        assert_eq!(text_box.next().unwrap(), &["◆aaa", " b", "◆"]);
+        assert_eq!(text_box.next().unwrap(), &["◆aaa", " b", "◆c"]);
+        assert_eq!(text_box.next().unwrap(), &["◆aaa", " b", "◆cc"]);
+        assert_eq!(text_box.next().unwrap(), &["◆aaa", " b", "◆ccc"]);
+        assert_eq!(text_box.next().unwrap(), &[" b", "◆ccc", ""]);
+        assert_eq!(text_box.next().unwrap(), &[" b", "◆ccc", " d"]);
+        assert_eq!(text_box.next().unwrap(), &[" b", "◆ccc", " dd"]);
+        assert_eq!(text_box.next().unwrap(), &["◆ccc", " dd", ""]);
+        assert_eq!(text_box.next().unwrap(), &["◆ccc", " dd", "◆"]);
+        assert_eq!(text_box.next().unwrap(), &["◆ccc", " dd", "◆e"]);
     }
 }

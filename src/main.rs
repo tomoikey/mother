@@ -47,7 +47,7 @@ fn main() {
 
     let font = FontRef::try_from_slice(FONT_BYTES).expect("Error constructing Font");
     let mut text = TextBox::<20>::new(
-        "◆だいぶ　ながいじかん\nぼうけんを　つづけているようだね\nぴいちゃん　は\nぴいぴい　なくよ",
+        "はるかさん Linux のちょうしは\nどうですか？",
     );
 
     let file = File::create("dest/output.gif").expect("Error creating file");
@@ -75,7 +75,7 @@ fn main() {
             HEIGHT as f32 - 60.0,
         );
 
-        let frame = Frame::from_parts(image_buffer, 0, 0, Delay::from_numer_denom_ms(10, 100));
+        let frame = Frame::from_parts(image_buffer, 0, 0, Delay::from_numer_denom_ms(8, 100));
         encoder.encode_frame(frame).expect("Error encoding frame");
     }
 }
