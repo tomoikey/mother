@@ -23,6 +23,11 @@ impl<const TEXT_LENGTH_LIMIT: usize> TextBox<TEXT_LENGTH_LIMIT> {
                     remains.push(CharType::Char('◆'));
                     size = 0;
                 }
+                '|' => {
+                    remains.push(CharType::NewLine);
+                    remains.push(CharType::LineHeadSpace);
+                    size = 0;
+                }
                 c if size < TEXT_LENGTH_LIMIT => {
                     remains.push(CharType::Char(c));
                     size += 1;
@@ -115,7 +120,7 @@ mod tests {
 
     #[test]
     fn test_text_box() {
-        let mut text_box = TextBox::<3>::new("aaab\ncccdd\ne".to_string());
+        let mut text_box = TextBox::<3>::new("aaab\ncccdd\ne|f".to_string());
 
         assert_eq!(text_box.next().unwrap(), &["◆", "", ""]);
         assert_eq!(text_box.next().unwrap(), &["◆a", "", ""]);
@@ -132,5 +137,7 @@ mod tests {
         assert_eq!(text_box.next().unwrap(), &["◆ccc", " dd", ""]);
         assert_eq!(text_box.next().unwrap(), &["◆ccc", " dd", "◆"]);
         assert_eq!(text_box.next().unwrap(), &["◆ccc", " dd", "◆e"]);
+        assert_eq!(text_box.next().unwrap(), &[" dd", "◆e", ""]);
+        assert_eq!(text_box.next().unwrap(), &[" dd", "◆e", " f"]);
     }
 }
