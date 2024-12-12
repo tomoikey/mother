@@ -46,12 +46,16 @@ fn init_image() -> image::ImageBuffer<Rgba<u8>, Vec<u8>> {
 
 #[derive(Parser)]
 struct Args {
+    /// Text to display
     #[clap(short, long)]
     text: String,
+    /// Output file
     #[clap(short, long)]
     output: String,
+    /// Speed of the gif
     #[clap(short, long, default_value = "8")]
     speed: u32,
+    /// Theme of the text box
     #[clap(short, long, default_value = "plain")]
     theme: Theme,
 }
@@ -67,7 +71,7 @@ fn main() -> anyhow::Result<()> {
         text,
         output,
         speed,
-        theme,
+        ..
     } = Args::parse();
 
     let image_buffer = init_image();

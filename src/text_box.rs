@@ -83,24 +83,12 @@ impl<const TEXT_LENGTH_LIMIT: usize> TextBox<TEXT_LENGTH_LIMIT> {
         Some(&self.lines)
     }
 
-    fn lines_head(&self) -> &str {
-        self.lines[0].as_str()
-    }
-
     fn lines_head_mut(&mut self) -> &mut String {
         &mut self.lines[0]
     }
 
-    fn lines_middle(&self) -> &str {
-        self.lines[1].as_str()
-    }
-
     fn lines_middle_mut(&mut self) -> &mut String {
         &mut self.lines[1]
-    }
-
-    fn lines_last(&self) -> &str {
-        self.lines[2].as_str()
     }
 
     fn lines_last_mut(&mut self) -> &mut String {
