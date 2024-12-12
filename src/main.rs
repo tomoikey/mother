@@ -1,8 +1,8 @@
 mod text_box;
 
 use crate::text_box::TextBox;
-use ab_glyph::{FontRef, PxScale};
-use clap::{Parser, ValueEnum};
+use ab_glyph::{Font, FontRef, PxScale, ScaleFont};
+use clap::Parser;
 use image::codecs::gif::{GifEncoder, Repeat};
 use image::{Delay, Frame, GenericImageView, Rgba};
 use imageproc::drawing::draw_text_mut;
@@ -12,7 +12,8 @@ use std::path::Path;
 const WIDTH: u32 = 960;
 const HEIGHT: u32 = 256;
 const FONT_BYTES: &[u8] = include_bytes!("../assets/MOTHER PIXEL2.ttf");
-const TEXT_COLOR: Rgba<u8> = Rgba([255u8, 255u8, 255u8, 255]);
+const TEXT_COLOR_WHITE: Rgba<u8> = Rgba([255u8, 255u8, 255u8, 255]);
+const TEXT_COLOR_BROWN: Rgba<u8> = Rgba([222u8, 163u8, 134u8, 255]);
 
 const SCALE: f32 = 28.0;
 const PX_SCALE: PxScale = PxScale { x: SCALE, y: SCALE };
@@ -24,15 +25,38 @@ fn draw_text(
     x: f32,
     y: f32,
 ) {
-    draw_text_mut(
-        image_buffer,
-        TEXT_COLOR,
-        x as i32,
-        y as i32,
-        PX_SCALE,
-        font,
-        &text,
-    );
+    if text.starts_with("◆") {
+        draw_text_mut(
+            image_buffer,
+            TEXT_COLOR_BROWN,
+            x as i32,
+            y as i32,
+            PX_SCALE,
+            font,
+            "◆",
+        );
+        let text = text.chars().skip(1).collect::<String>();
+        let font = font.as_scaled(PX_SCALE);
+        draw_text_mut(
+            image_buffer,
+            TEXT_COLOR_WHITE,
+            (x + font.h_advance(font.glyph_id('◆'))) as i32,
+            y as i32,
+            PX_SCALE,
+            font.font(),
+            &text,
+        );
+    } else {
+        draw_text_mut(
+            image_buffer,
+            TEXT_COLOR_WHITE,
+            x as i32,
+            y as i32,
+            PX_SCALE,
+            font,
+            &text,
+        );
+    }
 }
 
 fn init_image() -> image::ImageBuffer<Rgba<u8>, Vec<u8>> {
@@ -50,20 +74,11 @@ struct Args {
     #[clap(short, long)]
     text: String,
     /// Output file
-    #[clap(short, long)]
+    #[clap(short, long, default_value = "./output.gif")]
     output: String,
     /// Speed of the gif
     #[clap(short, long, default_value = "8")]
     speed: u32,
-    /// Theme of the text box
-    #[clap(short, long, default_value = "plain")]
-    theme: Theme,
-}
-
-#[derive(Clone, Copy, ValueEnum)]
-enum Theme {
-    Plain,
-    Banana,
 }
 
 fn main() -> anyhow::Result<()> {
