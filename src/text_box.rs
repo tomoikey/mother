@@ -12,14 +12,15 @@ pub struct TextBox<const TEXT_LENGTH_LIMIT: usize> {
 }
 
 impl<const TEXT_LENGTH_LIMIT: usize> TextBox<TEXT_LENGTH_LIMIT> {
-    pub fn new(text: String) -> Self {
+    pub fn new<STRING: Into<String>>(text: STRING) -> Self {
         let mut remains = Vec::new();
 
         let mut size = 0;
-        for c in text.chars() {
+        for c in text.into().chars() {
             match c {
                 '\n' => {
                     remains.push(CharType::NewLine);
+                    remains.push(CharType::Char(' '));
                     size = 0;
                 },
                 c if size < TEXT_LENGTH_LIMIT => {
@@ -28,6 +29,7 @@ impl<const TEXT_LENGTH_LIMIT: usize> TextBox<TEXT_LENGTH_LIMIT> {
                 }
                 c => {
                     remains.push(CharType::NewLine);
+                    remains.push(CharType::Char(' '));
                     remains.push(CharType::Char(c));
                     size = 0;
                 }
