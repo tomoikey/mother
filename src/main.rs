@@ -2,9 +2,10 @@ mod text_box;
 
 use crate::text_box::TextBox;
 use ab_glyph::{Font, FontRef, PxScale, ScaleFont};
+use anyhow::{anyhow, bail};
 use clap::Parser;
 use image::codecs::gif::{GifEncoder, Repeat};
-use image::{Delay, Frame, GenericImageView, Rgba};
+use image::{Delay, Frame, GenericImageView, ImageBuffer, Rgba};
 use imageproc::drawing::draw_text_mut;
 use std::fs::File;
 use std::path::Path;
@@ -18,8 +19,10 @@ const TEXT_COLOR_BROWN: Rgba<u8> = Rgba([222u8, 163u8, 134u8, 255]);
 const SCALE: f32 = 28.0;
 const PX_SCALE: PxScale = PxScale { x: SCALE, y: SCALE };
 
+const TEXT_LENGTH_LIMIT: usize = 25;
+
 fn draw_text(
-    image_buffer: &mut image::ImageBuffer<Rgba<u8>, Vec<u8>>,
+    image_buffer: &mut ImageBuffer<Rgba<u8>, Vec<u8>>,
     font: &FontRef,
     text: String,
     x: f32,
@@ -59,7 +62,7 @@ fn draw_text(
     }
 }
 
-fn init_image() -> image::ImageBuffer<Rgba<u8>, Vec<u8>> {
+fn init_image() -> ImageBuffer<Rgba<u8>, Vec<u8>> {
     let mut image_buffer = image::ImageBuffer::new(WIDTH, HEIGHT);
     let text_box = image::open("assets/dialog.png").expect("Error opening image");
     for (x, y, pixel) in text_box.pixels() {
@@ -92,33 +95,96 @@ fn main() -> anyhow::Result<()> {
     let image_buffer = init_image();
 
     let font = FontRef::try_from_slice(FONT_BYTES)?;
-    let mut text = TextBox::<20>::new(text);
+    let text = TextBox::<TEXT_LENGTH_LIMIT>::new(text);
 
-    let mut encoder = GifEncoder::new(File::create(Path::new(output.as_str()))?);
+    let path = Path::new(output.as_str());
+    let extension = path
+        .extension()
+        .and_then(std::ffi::OsStr::to_str)
+        .ok_or(anyhow::anyhow!("Output file must have an extension"))?;
 
-    encoder.set_repeat(Repeat::Infinite)?;
+    match extension {
+        "gif" => {
+            generate_gif(
+                GifEncoder::new(File::create(path)?),
+                text,
+                &font,
+                image_buffer,
+                speed,
+            )?;
+        }
+        "png" => {
+            generate_png(text, &font, image_buffer, path)?;
+        }
+        _ => bail!("Unsupported file extension: {}", extension),
+    }
 
+    Ok(())
+}
+
+fn generate_png(
+    mut text: TextBox<TEXT_LENGTH_LIMIT>,
+    font: &FontRef,
+    base_image_buffer: ImageBuffer<Rgba<u8>, Vec<u8>>,
+    path: &Path,
+) -> anyhow::Result<()> {
+    let mut image_buffer = base_image_buffer.clone();
+    let mut count = 0;
     while let Some(lines) = text.next() {
-        let mut image_buffer = image_buffer.clone();
-        draw_text(&mut image_buffer, &font, lines[0].clone(), 40.0, 60.0);
+        draw_text(&mut image_buffer, font, lines[0].clone(), 40.0, 60.0);
         draw_text(
             &mut image_buffer,
-            &font,
+            font,
             lines[1].clone(),
             40.0,
             HEIGHT as f32 / 2.0,
         );
         draw_text(
             &mut image_buffer,
-            &font,
+            font,
+            lines[2].clone(),
+            40.0,
+            HEIGHT as f32 - 60.0,
+        );
+        image_buffer.save(Path::new(&format!(
+            "{}-{}.png",
+            path.to_str().ok_or(anyhow!(""))?,
+            count
+        )))?;
+        count += 1;
+        image_buffer = base_image_buffer.clone();
+    }
+    Ok(())
+}
+
+fn generate_gif(
+    mut encoder: GifEncoder<File>,
+    mut text: TextBox<TEXT_LENGTH_LIMIT>,
+    font: &FontRef,
+    base_image_buffer: ImageBuffer<Rgba<u8>, Vec<u8>>,
+    speed: u32,
+) -> anyhow::Result<()> {
+    encoder.set_repeat(Repeat::Infinite)?;
+    while let Some(lines) = text.next() {
+        let mut image_buffer = base_image_buffer.clone();
+        draw_text(&mut image_buffer, font, lines[0].clone(), 40.0, 60.0);
+        draw_text(
+            &mut image_buffer,
+            font,
+            lines[1].clone(),
+            40.0,
+            HEIGHT as f32 / 2.0,
+        );
+        draw_text(
+            &mut image_buffer,
+            font,
             lines[2].clone(),
             40.0,
             HEIGHT as f32 - 60.0,
         );
 
-        let frame = Frame::from_parts(image_buffer, 0, 0, Delay::from_numer_denom_ms(speed, 100));
+        let frame = Frame::from_parts(image_buffer, 0, 0, Delay::from_numer_denom_ms(speed, 1));
         encoder.encode_frame(frame)?;
     }
-
     Ok(())
 }
