@@ -13,6 +13,9 @@ use std::io::Write;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
+pub const WIDTH: u32 = 960;
+pub const HEIGHT: u32 = 256;
+
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let output_path = args.output_path();
@@ -43,7 +46,7 @@ fn main() -> anyhow::Result<()> {
                     "-pixel_format",
                     "rgba",
                     "-video_size",
-                    &format!("{}x{}", drawer::WIDTH, drawer::HEIGHT),
+                    &format!("{WIDTH}x{HEIGHT}"),
                     "-framerate",
                     &args.speed().to_string(),
                     "-i",
@@ -58,7 +61,7 @@ fn main() -> anyhow::Result<()> {
                 ])
                 .stdin(Stdio::piped())
                 .spawn()
-                .map_err(|e| anyhow!("failed to spawn ffmpeg: {}", e))?;
+                .map_err(|e| anyhow!("failed to spawn ffmpeg: {e}"))?;
 
             let mut stdin = child.stdin.take().expect("failed to open stdin");
             frames.into_iter().for_each(|frame| {
@@ -70,7 +73,7 @@ fn main() -> anyhow::Result<()> {
 
             let status = child.wait()?;
             if !status.success() {
-                bail!("ffmpeg exited with status {}", status);
+                bail!("ffmpeg exited with status {status}");
             }
         }
     }
