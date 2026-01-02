@@ -3,8 +3,8 @@ use ab_glyph::{Font, FontRef, PxScale, ScaleFont};
 use image::{ImageBuffer, Rgba};
 use imageproc::drawing::draw_text_mut;
 
-const WIDTH: u32 = 960;
-const HEIGHT: u32 = 256;
+pub(crate) const WIDTH: u32 = 960;
+pub(crate) const HEIGHT: u32 = 256;
 const TEXT_COLOR_WHITE: Rgba<u8> = Rgba([255u8, 255u8, 255u8, 255]);
 const TEXT_COLOR_BROWN: Rgba<u8> = Rgba([222u8, 163u8, 134u8, 255]);
 

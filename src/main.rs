@@ -4,12 +4,14 @@ mod text_box;
 
 use crate::cli::{Args, OutputFileExtension};
 use crate::drawer::Drawer;
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 use clap::Parser;
 use image::codecs::gif::{GifEncoder, Repeat};
 use image::{Delay, Frame};
 use std::fs::File;
+use std::io::Write;
 use std::path::Path;
+use std::process::{Command, Stdio};
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
@@ -31,6 +33,45 @@ fn main() -> anyhow::Result<()> {
                     .save(Path::new(&format!("{output_path}-{i}.png")))
                     .expect("Failed to save frame")
             })
+        }
+        OutputFileExtension::Mp4 => {
+            let mut child = Command::new("ffmpeg")
+                .args([
+                    "-y",
+                    "-f",
+                    "rawvideo",
+                    "-pixel_format",
+                    "rgba",
+                    "-video_size",
+                    &format!("{}x{}", drawer::WIDTH, drawer::HEIGHT),
+                    "-framerate",
+                    &args.speed().to_string(),
+                    "-i",
+                    "-",
+                    "-c:v",
+                    "libx264",
+                    "-pix_fmt",
+                    "yuv420p",
+                    "-movflags",
+                    "faststart",
+                    output_path.to_str().ok_or(anyhow!("invalid path"))?,
+                ])
+                .stdin(Stdio::piped())
+                .spawn()
+                .map_err(|e| anyhow!("failed to spawn ffmpeg: {}", e))?;
+
+            let mut stdin = child.stdin.take().expect("failed to open stdin");
+            frames.into_iter().for_each(|frame| {
+                stdin
+                    .write_all(&frame.into_raw())
+                    .expect("failed to write frame")
+            });
+            drop(stdin);
+
+            let status = child.wait()?;
+            if !status.success() {
+                bail!("ffmpeg exited with status {}", status);
+            }
         }
     }
     Ok(())

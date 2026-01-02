@@ -34,6 +34,7 @@ impl Args {
         match extension {
             "gif" => Ok(OutputFileExtension::Gif),
             "png" => Ok(OutputFileExtension::Png),
+            "mp4" => Ok(OutputFileExtension::Mp4),
             _ => Err(anyhow!("Unknown extension: {}", extension)),
         }
     }
@@ -46,4 +47,5 @@ impl Args {
 pub enum OutputFileExtension {
     Gif,
     Png,
+    Mp4,
 }
