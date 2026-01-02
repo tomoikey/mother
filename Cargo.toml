@@ -6,9 +6,9 @@ authors = ["tomoikey"]
 description = "A tool for generating Mother2 textboxes"
 
 [dependencies]
-ab_glyph = "0.2.29"
-anyhow = "1.0.94"
-clap = { version = "4.5.23", features = ["derive"] }
-image = "0.25.5"
+ab_glyph = "0.2.32"
+anyhow = "1.0.100"
+clap = { version = "4.5.53", features = ["derive"] }
+image = "0.25.9"
 imageproc = "0.25.0"
 open = "5.3.3"
