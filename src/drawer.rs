@@ -1,11 +1,15 @@
 use crate::text_box::TextBox;
-use crate::{PX_SCALE, TEXT_COLOR_BROWN, TEXT_COLOR_WHITE};
-use ab_glyph::{Font, FontRef, ScaleFont};
+use ab_glyph::{Font, FontRef, PxScale, ScaleFont};
 use image::{ImageBuffer, Rgba};
 use imageproc::drawing::draw_text_mut;
 
 const WIDTH: u32 = 960;
 const HEIGHT: u32 = 256;
+const TEXT_COLOR_WHITE: Rgba<u8> = Rgba([255u8, 255u8, 255u8, 255]);
+const TEXT_COLOR_BROWN: Rgba<u8> = Rgba([222u8, 163u8, 134u8, 255]);
+
+const SCALE: f32 = 28.0;
+const PX_SCALE: PxScale = PxScale { x: SCALE, y: SCALE };
 const DIALOG_IMAGE_BYTES: &[u8] = include_bytes!("../assets/dialog.png");
 const FONT_BYTES: &[u8] = include_bytes!("../assets/MOTHER PIXEL2.ttf");
 const TEXT_LENGTH_LIMIT: usize = 25;

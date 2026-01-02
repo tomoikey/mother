@@ -4,19 +4,12 @@ mod text_box;
 
 use crate::cli::{Args, OutputFileExtension};
 use crate::drawer::Drawer;
-use ab_glyph::PxScale;
 use anyhow::anyhow;
 use clap::Parser;
 use image::codecs::gif::{GifEncoder, Repeat};
-use image::{Delay, Frame, Rgba};
+use image::{Delay, Frame};
 use std::fs::File;
 use std::path::Path;
-
-const TEXT_COLOR_WHITE: Rgba<u8> = Rgba([255u8, 255u8, 255u8, 255]);
-const TEXT_COLOR_BROWN: Rgba<u8> = Rgba([222u8, 163u8, 134u8, 255]);
-
-const SCALE: f32 = 28.0;
-const PX_SCALE: PxScale = PxScale { x: SCALE, y: SCALE };
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
