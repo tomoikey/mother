@@ -21,19 +21,18 @@ pub struct Drawer {
 
 impl Drawer {
     pub fn new() -> anyhow::Result<Self> {
-        let font = FontRef::try_from_slice(FONT_BYTES)?;
         let text_box = image::load_from_memory(DIALOG_IMAGE_BYTES)
             .expect("Error loading embedded dialog image")
             .to_rgba8();
 
         let mut original_text_box_image_buffer = image::ImageBuffer::new(WIDTH, HEIGHT);
-        for (x, y, pixel) in text_box.enumerate_pixels() {
+        text_box.enumerate_pixels().for_each(|(x, y, px)| {
             if x < WIDTH && y < HEIGHT {
-                original_text_box_image_buffer.put_pixel(x, y, *pixel);
+                original_text_box_image_buffer.put_pixel(x, y, *px);
             }
-        }
+        });
         Ok(Self {
-            font,
+            font: FontRef::try_from_slice(FONT_BYTES)?,
             original_text_box_image_buffer,
         })
     }
