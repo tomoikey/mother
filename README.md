@@ -22,7 +22,7 @@ MP4ファイルを生成するには、システムに **FFmpeg** がインス�
 ## Installation / インストール
 
 ```bash
-$ ./install.sh
+$ chmod +x ./install.sh && ./install.sh
 ```
 
 ## Usage / 使い方

@@ -82,7 +82,7 @@ fn main() -> anyhow::Result<()> {
             }
 
             let filter_complex = format!(
-                "{}; {}; {}amix=inputs={}:duration=longest[outa]",
+                "{}; {}; {}amix=inputs={}:duration=longest:dropout_transition=0:normalize=0[outa]",
                 split_cmd,
                 adelays.join(";"),
                 amix_inputs.join(""),
