@@ -55,18 +55,18 @@ impl<const TEXT_LENGTH_LIMIT: usize> TextBox<TEXT_LENGTH_LIMIT> {
         match self.remains.remove(0) {
             CharType::Char(c) => {
                 if self.new_line_count == 0 {
-                    self.lines_head_mut().push(c);
+                    self.lines[0].push(c);
                 } else if self.new_line_count == 1 {
-                    self.lines_middle_mut().push(c);
+                    self.lines[1].push(c);
                 } else {
-                    self.lines_last_mut().push(c);
+                    self.lines[2].push(c);
                 }
             }
             CharType::LineHeadSpace => {
                 if self.new_line_count == 1 {
-                    self.lines_middle_mut().push(' ');
+                    self.lines[1].push(' ');
                 } else {
-                    self.lines_last_mut().push(' ');
+                    self.lines[2].push(' ');
                 }
                 self.next();
             }
@@ -81,18 +81,6 @@ impl<const TEXT_LENGTH_LIMIT: usize> TextBox<TEXT_LENGTH_LIMIT> {
         }
 
         Some(&self.lines)
-    }
-
-    fn lines_head_mut(&mut self) -> &mut String {
-        &mut self.lines[0]
-    }
-
-    fn lines_middle_mut(&mut self) -> &mut String {
-        &mut self.lines[1]
-    }
-
-    fn lines_last_mut(&mut self) -> &mut String {
-        &mut self.lines[2]
     }
 
     fn shift(&mut self) {
