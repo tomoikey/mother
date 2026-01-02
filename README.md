@@ -1,3 +1,57 @@
+# MOTHER Style Dialog Generator
+
+A CLI tool to generate MOTHER 2 (EarthBound) style text dialog animations.
+
+MOTHER2 (EarthBound) 風のテキストダイアログアニメーションを生成する CLI ツールです。
+
+## Features
+* Generate **GIF** animations.
+* Generate **MP4** videos with sound.
+* Generate **PNG** sequences.
+
+## Requirements / 必須要件
+
+To generate **MP4** files, **FFmpeg** must be installed and available in your system's PATH.
+
+MP4ファイルを生成するには、システムに **FFmpeg** がインストールされており、パスが通っている必要があります。
+
+* **macOS:** `brew install ffmpeg`
+* **Windows:** `scoop install ffmpeg` or download from official site.
+* **Linux:** `sudo apt install ffmpeg`
+
+## Installation / インストール
+
+```bash
+$ ./install.sh
+```
+
+## Usage / 使い方
+
+```bash
+Usage: mother [OPTIONS] --text <TEXT>
+
+Options:
+  -t, --text <TEXT>      Text to display
+  -o, --output <OUTPUT>  Output file [default: ./output.gif]
+  -s, --speed <SPEED>    Speed of the gif [default: 8]
+      --silent           Process silently
+  -h, --help             Print help
+```
+
+## Examples / 使用例
+### 1. Basic GIF generation (Default)
+
+```bash
+$ mother -t "Hello, World!"
+# Generates ./output.gif
+```
+
+### 2. Generate MP4 with Sound
+
+```bash
+$ mother --text "PK Fire!" --output fire.mp4
+```
+
 ## Credits & Legal / 権利表記・免責事項
 
 ### Disclaimer / 免責

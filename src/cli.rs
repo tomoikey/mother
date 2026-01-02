@@ -13,9 +13,9 @@ pub struct Args {
     /// Speed of the gif
     #[clap(short, long, default_value = "8")]
     speed: u32,
-    /// Open file immediately
-    #[clap(long, default_value = "true")]
-    open_immediately: bool,
+    /// Process silently
+    #[clap(long, default_value = "false")]
+    silent: bool,
 }
 
 impl Args {
@@ -47,7 +47,7 @@ impl Args {
     }
 
     pub fn open_immediately(&self) -> bool {
-        self.open_immediately
+        !self.silent
     }
 }
 
