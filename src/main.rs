@@ -46,7 +46,7 @@ fn main() -> anyhow::Result<()> {
             let ms_per_frame = 1000.0 / fps;
             let mut split_labels = Vec::new();
             for i in 0..frame_count {
-                split_labels.push(format!("[s{}]", i));
+                split_labels.push(format!("[s{i}]"));
             }
             let split_cmd = format!(
                 "[1:a]volume=10.0,asplit={frame_count}{}",
