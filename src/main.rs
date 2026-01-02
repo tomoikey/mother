@@ -13,6 +13,7 @@ use std::path::Path;
 const WIDTH: u32 = 960;
 const HEIGHT: u32 = 256;
 const FONT_BYTES: &[u8] = include_bytes!("../assets/MOTHER PIXEL2.ttf");
+const DIALOG_IMAGE_BYTES: &[u8] = include_bytes!("../assets/dialog.png");
 const TEXT_COLOR_WHITE: Rgba<u8> = Rgba([255u8, 255u8, 255u8, 255]);
 const TEXT_COLOR_BROWN: Rgba<u8> = Rgba([222u8, 163u8, 134u8, 255]);
 
@@ -63,14 +64,19 @@ fn draw_text(
 }
 
 fn init_image() -> ImageBuffer<Rgba<u8>, Vec<u8>> {
+    let text_box = image::load_from_memory(DIALOG_IMAGE_BYTES)
+        .expect("Error loading embedded dialog image")
+        .to_rgba8();
+
     let mut image_buffer = image::ImageBuffer::new(WIDTH, HEIGHT);
-    let text_box = image::open("assets/dialog.png").expect("Error opening image");
-    for (x, y, pixel) in text_box.pixels() {
-        image_buffer.put_pixel(x, y, pixel);
+
+    for (x, y, pixel) in text_box.enumerate_pixels() {
+        if x < WIDTH && y < HEIGHT {
+            image_buffer.put_pixel(x, y, *pixel);
+        }
     }
     image_buffer
 }
-
 #[derive(Parser)]
 struct Args {
     /// Text to display
