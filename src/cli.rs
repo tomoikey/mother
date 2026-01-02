@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use std::path::Path;
 
 #[derive(Parser)]
@@ -16,6 +16,16 @@ pub struct Args {
     /// Process silently
     #[clap(long, default_value = "false")]
     silent: bool,
+    /// Output quality
+    #[clap(short, long, value_enum, default_value_t = OutputQuality::High)]
+    quality: OutputQuality,
+}
+
+#[derive(Copy, Clone, ValueEnum, PartialEq)]
+pub enum OutputQuality {
+    Low,
+    Medium,
+    High,
 }
 
 impl Args {
@@ -48,6 +58,10 @@ impl Args {
 
     pub fn open_immediately(&self) -> bool {
         !self.silent
+    }
+    
+    pub fn quality(&self) -> OutputQuality {
+        self.quality
     }
 }
 

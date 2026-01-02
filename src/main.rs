@@ -2,11 +2,12 @@ mod cli;
 mod drawer;
 mod text_box;
 
-use crate::cli::{Args, OutputFileExtension};
+use crate::cli::{Args, OutputFileExtension, OutputQuality};
 use crate::drawer::Drawer;
 use anyhow::{anyhow, bail};
 use clap::Parser;
 use image::codecs::gif::{GifEncoder, Repeat};
+use image::imageops::{resize, FilterType};
 use image::{Delay, Frame};
 use std::fs::File;
 use std::io::Write;
@@ -19,7 +20,22 @@ pub const HEIGHT: u32 = 256;
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let output_path = args.output_path();
+    let scale = match args.quality() {
+        OutputQuality::High => 1.0,
+        OutputQuality::Medium => 0.5,
+        OutputQuality::Low => 0.25,
+    };
+    let new_width = (WIDTH as f32 * scale) as u32;
+    let new_height = (HEIGHT as f32 * scale) as u32;
     let frames = Drawer::new()?.draw(args.text())?;
+    let frames = if args.quality() == OutputQuality::High {
+        frames
+    } else {
+        frames
+            .iter()
+            .map(|f| resize(f, new_width, new_height, FilterType::Nearest))
+            .collect()
+    };
     match args.output_file_extension()? {
         OutputFileExtension::Gif => {
             let mut encoder = GifEncoder::new(File::create(output_path)?);
@@ -81,7 +97,7 @@ fn main() -> anyhow::Result<()> {
                     "-pixel_format",
                     "rgba",
                     "-video_size",
-                    &format!("{WIDTH}x{HEIGHT}"),
+                    &format!("{new_width}x{new_height}"),
                     "-framerate",
                     &fps.to_string(),
                     "-i",
