@@ -38,64 +38,20 @@ impl Drawer {
         })
     }
 
-    fn draw_text(
-        image_buffer: &mut ImageBuffer<Rgba<u8>, Vec<u8>>,
-        font: &FontRef,
-        text: String,
-        x: f32,
-        y: f32,
-    ) {
-        if text.starts_with("◆") {
-            draw_text_mut(
-                image_buffer,
-                TEXT_COLOR_BROWN,
-                x as i32,
-                y as i32,
-                PX_SCALE,
-                font,
-                "◆",
-            );
-            let text = text.chars().skip(1).collect::<String>();
-            let font = font.as_scaled(PX_SCALE);
-            draw_text_mut(
-                image_buffer,
-                TEXT_COLOR_WHITE,
-                (x + font.h_advance(font.glyph_id('◆'))) as i32,
-                y as i32,
-                PX_SCALE,
-                font.font(),
-                &text,
-            );
-        } else {
-            draw_text_mut(
-                image_buffer,
-                TEXT_COLOR_WHITE,
-                x as i32,
-                y as i32,
-                PX_SCALE,
-                font,
-                &text,
-            );
-        }
-    }
-
-    pub fn generate_frames(
-        &self,
-        text: &str,
-    ) -> anyhow::Result<Vec<ImageBuffer<Rgba<u8>, Vec<u8>>>> {
+    pub fn draw(&self, text: &str) -> anyhow::Result<Vec<ImageBuffer<Rgba<u8>, Vec<u8>>>> {
         let mut text = TextBox::<TEXT_LENGTH_LIMIT>::new(text);
         let mut result = Vec::new();
         while let Some(lines) = text.next() {
             let mut image_buffer = self.original_text_box_image_buffer.clone();
-            Self::draw_text(&mut image_buffer, &self.font, lines[0].clone(), 40.0, 60.0);
-            Self::draw_text(
+            draw_text(&mut image_buffer, &self.font, lines[0].clone(), 40.0, 60.0);
+            draw_text(
                 &mut image_buffer,
                 &self.font,
                 lines[1].clone(),
                 40.0,
                 HEIGHT as f32 / 2.0,
             );
-            Self::draw_text(
+            draw_text(
                 &mut image_buffer,
                 &self.font,
                 lines[2].clone(),
@@ -105,5 +61,46 @@ impl Drawer {
             result.push(image_buffer);
         }
         Ok(result)
+    }
+}
+
+fn draw_text(
+    image_buffer: &mut ImageBuffer<Rgba<u8>, Vec<u8>>,
+    font: &FontRef,
+    text: String,
+    x: f32,
+    y: f32,
+) {
+    if text.starts_with("◆") {
+        draw_text_mut(
+            image_buffer,
+            TEXT_COLOR_BROWN,
+            x as i32,
+            y as i32,
+            PX_SCALE,
+            font,
+            "◆",
+        );
+        let text = text.chars().skip(1).collect::<String>();
+        let font = font.as_scaled(PX_SCALE);
+        draw_text_mut(
+            image_buffer,
+            TEXT_COLOR_WHITE,
+            (x + font.h_advance(font.glyph_id('◆'))) as i32,
+            y as i32,
+            PX_SCALE,
+            font.font(),
+            &text,
+        );
+    } else {
+        draw_text_mut(
+            image_buffer,
+            TEXT_COLOR_WHITE,
+            x as i32,
+            y as i32,
+            PX_SCALE,
+            font,
+            &text,
+        );
     }
 }

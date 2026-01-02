@@ -14,7 +14,7 @@ use std::path::Path;
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let output_path = args.output_path();
-    let frames = Drawer::new()?.generate_frames(args.text())?;
+    let frames = Drawer::new()?.draw(args.text())?;
     match args.output_file_extension()? {
         OutputFileExtension::Gif => {
             let mut encoder = GifEncoder::new(File::create(output_path)?);
