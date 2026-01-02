@@ -1,4 +1,5 @@
 mod text_box;
+mod cli;
 
 use crate::text_box::TextBox;
 use ab_glyph::{Font, FontRef, PxScale, ScaleFont};
@@ -9,6 +10,7 @@ use image::{Delay, Frame, GenericImageView, ImageBuffer, Rgba};
 use imageproc::drawing::draw_text_mut;
 use std::fs::File;
 use std::path::Path;
+use crate::cli::Args;
 
 const WIDTH: u32 = 960;
 const HEIGHT: u32 = 256;
@@ -76,18 +78,6 @@ fn init_image() -> ImageBuffer<Rgba<u8>, Vec<u8>> {
         }
     }
     image_buffer
-}
-#[derive(Parser)]
-struct Args {
-    /// Text to display
-    #[clap(short, long)]
-    text: String,
-    /// Output file
-    #[clap(short, long, default_value = "./output.gif")]
-    output: String,
-    /// Speed of the gif
-    #[clap(short, long, default_value = "8")]
-    speed: u32,
 }
 
 fn main() -> anyhow::Result<()> {
