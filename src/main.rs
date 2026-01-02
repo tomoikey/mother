@@ -1,16 +1,16 @@
-mod text_box;
 mod cli;
+mod text_box;
 
+use crate::cli::Args;
 use crate::text_box::TextBox;
 use ab_glyph::{Font, FontRef, PxScale, ScaleFont};
 use anyhow::{anyhow, bail};
 use clap::Parser;
 use image::codecs::gif::{GifEncoder, Repeat};
-use image::{Delay, Frame, GenericImageView, ImageBuffer, Rgba};
+use image::{Delay, Frame, ImageBuffer, Rgba};
 use imageproc::drawing::draw_text_mut;
 use std::fs::File;
 use std::path::Path;
-use crate::cli::Args;
 
 const WIDTH: u32 = 960;
 const HEIGHT: u32 = 256;
@@ -101,16 +101,25 @@ fn main() -> anyhow::Result<()> {
 
     match extension {
         "gif" => {
-            generate_gif(
-                GifEncoder::new(File::create(path)?),
-                text,
-                &font,
-                image_buffer,
-                speed,
-            )?;
+            let mut encoder = GifEncoder::new(File::create(path)?);
+            encoder.set_repeat(Repeat::Infinite)?;
+            for image_buffer in generate_frames(text, &font, image_buffer)? {
+                let frame =
+                    Frame::from_parts(image_buffer, 0, 0, Delay::from_numer_denom_ms(speed, 1));
+                encoder.encode_frame(frame)?;
+            }
         }
         "png" => {
-            generate_png(text, &font, image_buffer, path)?;
+            for (i, image_buffer) in generate_frames(text, &font, image_buffer)?
+                .into_iter()
+                .enumerate()
+            {
+                image_buffer.save(Path::new(&format!(
+                    "{}-{}.png",
+                    path.to_str().ok_or(anyhow!(""))?,
+                    i
+                )))?;
+            }
         }
         _ => bail!("Unsupported file extension: {}", extension),
     }
@@ -118,49 +127,12 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn generate_png(
+fn generate_frames(
     mut text: TextBox<TEXT_LENGTH_LIMIT>,
     font: &FontRef,
     base_image_buffer: ImageBuffer<Rgba<u8>, Vec<u8>>,
-    path: &Path,
-) -> anyhow::Result<()> {
-    let mut image_buffer = base_image_buffer.clone();
-    let mut count = 0;
-    while let Some(lines) = text.next() {
-        draw_text(&mut image_buffer, font, lines[0].clone(), 40.0, 60.0);
-        draw_text(
-            &mut image_buffer,
-            font,
-            lines[1].clone(),
-            40.0,
-            HEIGHT as f32 / 2.0,
-        );
-        draw_text(
-            &mut image_buffer,
-            font,
-            lines[2].clone(),
-            40.0,
-            HEIGHT as f32 - 60.0,
-        );
-        image_buffer.save(Path::new(&format!(
-            "{}-{}.png",
-            path.to_str().ok_or(anyhow!(""))?,
-            count
-        )))?;
-        count += 1;
-        image_buffer = base_image_buffer.clone();
-    }
-    Ok(())
-}
-
-fn generate_gif(
-    mut encoder: GifEncoder<File>,
-    mut text: TextBox<TEXT_LENGTH_LIMIT>,
-    font: &FontRef,
-    base_image_buffer: ImageBuffer<Rgba<u8>, Vec<u8>>,
-    speed: u32,
-) -> anyhow::Result<()> {
-    encoder.set_repeat(Repeat::Infinite)?;
+) -> anyhow::Result<Vec<ImageBuffer<Rgba<u8>, Vec<u8>>>> {
+    let mut result = Vec::new();
     while let Some(lines) = text.next() {
         let mut image_buffer = base_image_buffer.clone();
         draw_text(&mut image_buffer, font, lines[0].clone(), 40.0, 60.0);
@@ -178,9 +150,7 @@ fn generate_gif(
             40.0,
             HEIGHT as f32 - 60.0,
         );
-
-        let frame = Frame::from_parts(image_buffer, 0, 0, Delay::from_numer_denom_ms(speed, 1));
-        encoder.encode_frame(frame)?;
+        result.push(image_buffer);
     }
-    Ok(())
+    Ok(result)
 }
