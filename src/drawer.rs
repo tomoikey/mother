@@ -29,7 +29,6 @@ impl Drawer {
         let text_box = image::load_from_memory(DIALOG_IMAGE_BYTES)
             .expect("Error loading embedded dialog image")
             .to_rgba8();
-
         let mut original_text_box_image_buffer = image::ImageBuffer::new(WIDTH, HEIGHT);
         text_box.enumerate_pixels().for_each(|(x, y, px)| {
             if x < WIDTH && y < HEIGHT {
@@ -76,7 +75,6 @@ fn draw_text(
             font,
             "◆",
         );
-        let text = text.chars().skip(1).collect::<String>();
         let font = font.as_scaled(PX_SCALE);
         draw_text_mut(
             image_buffer,
@@ -85,7 +83,7 @@ fn draw_text(
             y as i32,
             PX_SCALE,
             font.font(),
-            &text,
+            &text.chars().skip(1).collect::<String>(),
         );
     } else {
         draw_text_mut(
