@@ -27,25 +27,25 @@ fn main() -> anyhow::Result<()> {
         args.speed(),
     );
     let output_file_extension = output_file_extension?;
-    let drawer = Drawer::new()?;
-    let frames = drawer.generate_frames(text)?;
+    let frames = Drawer::new()?.generate_frames(text)?;
     match output_file_extension {
         OutputFileExtension::Gif => {
             let mut encoder = GifEncoder::new(File::create(output_path)?);
             encoder.set_repeat(Repeat::Infinite)?;
-            for frame in frames {
-                let frame = Frame::from_parts(frame, 0, 0, Delay::from_numer_denom_ms(speed, 1));
-                encoder.encode_frame(frame)?;
-            }
+            frames
+                .into_iter()
+                .map(|frame| Frame::from_parts(frame, 0, 0, Delay::from_numer_denom_ms(speed, 1)))
+                .for_each(|frame| {
+                    encoder.encode_frame(frame).expect("Failed to encode frame");
+                })
         }
         OutputFileExtension::Png => {
-            for (i, frame) in frames.into_iter().enumerate() {
-                frame.save(Path::new(&format!(
-                    "{}-{}.png",
-                    output_path.to_str().ok_or(anyhow!(""))?,
-                    i
-                )))?;
-            }
+            let output_path = output_path.to_str().ok_or(anyhow!(""))?;
+            frames.into_iter().enumerate().for_each(|(i, frame)| {
+                frame
+                    .save(Path::new(&format!("{output_path}-{i}.png")))
+                    .expect("Failed to save frame");
+            })
         }
     }
 
