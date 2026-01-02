@@ -38,6 +38,39 @@ fn main() -> anyhow::Result<()> {
             })
         }
         OutputFileExtension::Mp4 => {
+            const BEEP_WAV: &[u8] = include_bytes!("../assets/text_blip.wav");
+            let temp_se_path = std::env::temp_dir().join("mother_beep.wav");
+            std::fs::write(&temp_se_path, BEEP_WAV)?;
+            let fps = args.speed() as f32;
+            let frame_count = frames.len();
+            let ms_per_frame = 1000.0 / fps;
+            let mut split_labels = Vec::new();
+            for i in 0..frame_count {
+                split_labels.push(format!("[s{}]", i));
+            }
+            let split_cmd = format!("[1:a]asplit={}{}", frame_count, split_labels.join(""));
+
+            let mut adelays = Vec::new();
+            let mut amix_inputs = Vec::new();
+            for i in 0..frame_count {
+                let delay_ms = (i as f32 * ms_per_frame) as u32;
+                let input_label = format!("[s{}]", i);
+                let output_label_name = format!("a{}", i);
+                adelays.push(format!(
+                    "{}adelay={}|{}[{}]",
+                    input_label, delay_ms, delay_ms, output_label_name
+                ));
+                amix_inputs.push(format!("[{}]", output_label_name));
+            }
+
+            let filter_complex = format!(
+                "{}; {}; {}amix=inputs={}:duration=longest[outa]",
+                split_cmd,
+                adelays.join(";"),
+                amix_inputs.join(""),
+                frame_count
+            );
+
             let mut child = Command::new("ffmpeg")
                 .args([
                     "-y",
@@ -48,9 +81,17 @@ fn main() -> anyhow::Result<()> {
                     "-video_size",
                     &format!("{WIDTH}x{HEIGHT}"),
                     "-framerate",
-                    &args.speed().to_string(),
+                    &fps.to_string(),
                     "-i",
                     "-",
+                    "-i",
+                    temp_se_path.to_str().ok_or(anyhow!("invalid temp path"))?,
+                    "-filter_complex",
+                    &filter_complex,
+                    "-map",
+                    "0:v:0",
+                    "-map",
+                    "[outa]",
                     "-c:v",
                     "libx264",
                     "-pix_fmt",
@@ -60,8 +101,7 @@ fn main() -> anyhow::Result<()> {
                     output_path.to_str().ok_or(anyhow!("invalid path"))?,
                 ])
                 .stdin(Stdio::piped())
-                .spawn()
-                .map_err(|e| anyhow!("failed to spawn ffmpeg: {e}"))?;
+                .spawn()?;
 
             let mut stdin = child.stdin.take().expect("failed to open stdin");
             frames.into_iter().for_each(|frame| {
@@ -72,6 +112,7 @@ fn main() -> anyhow::Result<()> {
             drop(stdin);
 
             let status = child.wait()?;
+            std::fs::remove_file(&temp_se_path).ok();
             if !status.success() {
                 bail!("ffmpeg exited with status {status}");
             }
