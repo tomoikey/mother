@@ -48,8 +48,10 @@ fn main() -> anyhow::Result<()> {
             for i in 0..frame_count {
                 split_labels.push(format!("[s{}]", i));
             }
-            let split_cmd = format!("[1:a]asplit={}{}", frame_count, split_labels.join(""));
-
+            let split_cmd = format!(
+                "[1:a]volume=10.0,asplit={frame_count}{}",
+                split_labels.join("")
+            );
             let mut adelays = Vec::new();
             let mut amix_inputs = Vec::new();
             for i in 0..frame_count {
@@ -118,5 +120,10 @@ fn main() -> anyhow::Result<()> {
             }
         }
     }
+
+    if args.open_immediately() {
+        open::that(output_path).map_err(|e| anyhow!("failed to open immediately: {e}"))?;
+    }
+
     Ok(())
 }
