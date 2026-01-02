@@ -13,6 +13,11 @@ const PX_SCALE: PxScale = PxScale { x: SCALE, y: SCALE };
 const DIALOG_IMAGE_BYTES: &[u8] = include_bytes!("../assets/dialog.png");
 const FONT_BYTES: &[u8] = include_bytes!("../assets/MOTHER PIXEL2.ttf");
 const TEXT_LENGTH_LIMIT: usize = 25;
+const TEXT_POSITIONS: [(f32, f32); 3] = [
+    (40.0, 60.0),
+    (40.0, HEIGHT as f32 / 2.0),
+    (40.0, HEIGHT as f32 - 60.0),
+];
 
 pub struct Drawer {
     font: FontRef<'static>,
@@ -42,21 +47,12 @@ impl Drawer {
         let mut result = Vec::new();
         while let Some(lines) = text.next() {
             let mut image_buffer = self.original_text_box_image_buffer.clone();
-            draw_text(&mut image_buffer, &self.font, lines[0].clone(), 40.0, 60.0);
-            draw_text(
-                &mut image_buffer,
-                &self.font,
-                lines[1].clone(),
-                40.0,
-                HEIGHT as f32 / 2.0,
-            );
-            draw_text(
-                &mut image_buffer,
-                &self.font,
-                lines[2].clone(),
-                40.0,
-                HEIGHT as f32 - 60.0,
-            );
+            TEXT_POSITIONS
+                .into_iter()
+                .enumerate()
+                .for_each(|(i, (x, y))| {
+                    draw_text(&mut image_buffer, &self.font, lines[i].clone(), x, y)
+                });
             result.push(image_buffer);
         }
         Ok(result)
