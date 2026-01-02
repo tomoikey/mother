@@ -1,10 +1,10 @@
 mod cli;
 mod text_box;
 
-use crate::cli::Args;
+use crate::cli::{Args, OutputFileExtension};
 use crate::text_box::TextBox;
 use ab_glyph::{Font, FontRef, PxScale, ScaleFont};
-use anyhow::{anyhow, bail};
+use anyhow::anyhow;
 use clap::Parser;
 use image::codecs::gif::{GifEncoder, Repeat};
 use image::{Delay, Frame, ImageBuffer, Rgba};
@@ -81,47 +81,37 @@ fn init_image() -> ImageBuffer<Rgba<u8>, Vec<u8>> {
 }
 
 fn main() -> anyhow::Result<()> {
-    let Args {
-        text,
-        output,
-        speed,
-        ..
-    } = Args::parse();
-
+    let args = Args::parse();
+    let (text, output_path, output_file_extension, speed) = (
+        args.text(),
+        args.output_path(),
+        args.output_file_extension(),
+        args.speed(),
+    );
+    let output_file_extension = output_file_extension?;
     let image_buffer = init_image();
-
     let font = FontRef::try_from_slice(FONT_BYTES)?;
     let text = TextBox::<TEXT_LENGTH_LIMIT>::new(text);
 
-    let path = Path::new(output.as_str());
-    let extension = path
-        .extension()
-        .and_then(std::ffi::OsStr::to_str)
-        .ok_or(anyhow::anyhow!("Output file must have an extension"))?;
-
-    match extension {
-        "gif" => {
-            let mut encoder = GifEncoder::new(File::create(path)?);
+    let frames = generate_frames(text, &font, image_buffer)?;
+    match output_file_extension {
+        OutputFileExtension::Gif => {
+            let mut encoder = GifEncoder::new(File::create(output_path)?);
             encoder.set_repeat(Repeat::Infinite)?;
-            for image_buffer in generate_frames(text, &font, image_buffer)? {
-                let frame =
-                    Frame::from_parts(image_buffer, 0, 0, Delay::from_numer_denom_ms(speed, 1));
+            for frame in frames {
+                let frame = Frame::from_parts(frame, 0, 0, Delay::from_numer_denom_ms(speed, 1));
                 encoder.encode_frame(frame)?;
             }
         }
-        "png" => {
-            for (i, image_buffer) in generate_frames(text, &font, image_buffer)?
-                .into_iter()
-                .enumerate()
-            {
-                image_buffer.save(Path::new(&format!(
+        OutputFileExtension::Png => {
+            for (i, frame) in frames.into_iter().enumerate() {
+                frame.save(Path::new(&format!(
                     "{}-{}.png",
-                    path.to_str().ok_or(anyhow!(""))?,
+                    output_path.to_str().ok_or(anyhow!(""))?,
                     i
                 )))?;
             }
         }
-        _ => bail!("Unsupported file extension: {}", extension),
     }
 
     Ok(())
